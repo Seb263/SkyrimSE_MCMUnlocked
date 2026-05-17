@@ -5,8 +5,6 @@ namespace ModData
 	constexpr std::string_view MOD_NAME = "MCM Unlocked";
 	constexpr std::string_view PLUGIN_NAME = "MCM Unlocked.esp";
 
-	constexpr std::string_view MCM_MARKER_SCRIPT = "MCMUnlockedMarkerScript";
-
 	struct PluginForm
 	{
 		std::string_view name;

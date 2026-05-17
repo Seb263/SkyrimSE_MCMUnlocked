@@ -7,7 +7,7 @@ Int[] Function GetVersion() global native
 Int Function GetConfigCount() global native
 
 ; Creates a new MCM marker, registers it internally, and returns the associated ObjectReference
-ObjectReference Function RegisterMarker() global native
+ObjectReference Function RegisterMarker(String modName) global native
 
 ; Unregisters a configuration by index and removes its associated marker
 ; Returns true if the operation succeeded

@@ -1,7 +1,7 @@
 # MCM Unlocked
 *By Seb263*
 
-Removes SkyUI's 128 MCM menu limit by replacing fixed storage with dynamic allocation. MCM entries are only instantiated when needed. Supports SE, AE, and VR via SKSE.
+Removes SkyUI's 128 MCM menu limit and loads all MCMs in just a few seconds thanks to a fast dynamic allocation system. Entries are only instantiated when needed, avoiding any fixed preallocation. Supports SE, AE, and VR via SKSE.
 
 The mod can be downloaded here: [nexusmods.com](https://www.nexusmods.com/skyrimspecialedition/mods/180186)
 
@@ -16,7 +16,7 @@ The mod can be downloaded here: [nexusmods.com](https://www.nexusmods.com/skyrim
 
 ## User Requirements
 
-- [SkyUI (6.0+)](https://www.nexusmods.com/skyrimspecialedition/mods/12604)
+- [SkyUI (5.2 or 6.0+)](https://www.nexusmods.com/skyrimspecialedition/mods/12604)
   - Needed for any version
 - [Address Library for SKSE](https://www.nexusmods.com/skyrimspecialedition/mods/32444)
   - Needed for SSE/AE

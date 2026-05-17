@@ -24,9 +24,9 @@ namespace Papyrus
 		return ModCore::Main::GetConfigCount();
 	}
 
-	RE::TESObjectREFR* RegisterMarker(RE::StaticFunctionTag*)
+	RE::TESObjectREFR* RegisterMarker(RE::StaticFunctionTag*, RE::BSFixedString a_modName)
 	{
-		return ModCore::Main::RegisterMarker();
+		return ModCore::Main::RegisterMarker(a_modName.c_str());
 	}
 
 	bool UnregisterMarker(RE::StaticFunctionTag*, int a_configID)

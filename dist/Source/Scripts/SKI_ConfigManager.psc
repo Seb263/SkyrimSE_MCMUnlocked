@@ -21,7 +21,7 @@ bool				_locked			= false
 ; -- Version 4 --
 
 bool				_cleanupFlag	= false
-int					_addCounter		= 0
+int					_initialCount	= 0
 int					_updateCounter	= 0
 
 
@@ -74,19 +74,20 @@ event OnUpdate()
 		CleanUp()
 	endIf
 
-	if (_addCounter > 0)
-		Debug.Notification("MCM: Registered " + _addCounter + " new menu(s).")
-		_addCounter = 0
-	endIf
+	Int addedCount = MCMUnlocked.GetConfigCount() - _initialCount
+	If (addedCount > 0)
+		Debug.Notification("MCM: Registered " + addedCount + " new menu(s).")
+	EndIf
 
+	_initialCount = MCMUnlocked.GetConfigCount()
 	SendModEvent("SKICP_configManagerReady")
 
-	if (_updateCounter < 6)
+	If (_updateCounter < 6)
 		_updateCounter += 1
 		RegisterForSingleUpdate(5)
-	else
+	Else
 		RegisterForSingleUpdate(30)
-	endIf
+	EndIf
 endEvent
 
 event OnMenuOpen(string a_menuName)
@@ -222,55 +223,31 @@ int function GetVersion()
 endFunction
 
 int function RegisterMod(SKI_ConfigBase a_menu, string a_modName)
-    GotoState("BUSY")
-
-    Int count = MCMUnlocked.GetConfigCount()
-    Int i = 0
-    While i < count
-        SKI_ConfigBase existing = MCMUnlocked.GetConfigBase(i)
-        If existing == a_menu
-            GotoState("")
-            Return i
-        EndIf
-        i += 1
-    EndWhile
-
-	ObjectReference marker = MCMUnlocked.RegisterMarker()
+	ObjectReference marker = MCMUnlocked.RegisterMarker(a_modName)
 	If !marker
-		GotoState("")
 		Return -1
 	EndIf
 
 	MCMUnlockedMarkerScript markerScript = marker as MCMUnlockedMarkerScript
 	If !markerScript
-		GotoState("")
 		Return -1
 	EndIf
 	
 	markerScript.Initialize(a_menu, a_modName)
-	
-    _addCounter += 1
-    GotoState("")
-    Return count
+    Return 1
 endFunction
 
 int function UnregisterMod(SKI_ConfigBase a_menu)
-    GotoState("BUSY")
-
     Int count = MCMUnlocked.GetConfigCount()
     Int i = 0
     While i < count
         SKI_ConfigBase existing = MCMUnlocked.GetConfigBase(i)
         If existing == a_menu
             MCMUnlocked.UnregisterMarker(i)
-            GotoState("")
             Return i
         EndIf
         i += 1
     EndWhile
-
-    GotoState("")
-    Return -1
 endFunction
 
 function ForceReset()
@@ -300,7 +277,6 @@ function CleanUp()
 	While i >= 0
 		SKI_ConfigBase existing = MCMUnlocked.GetConfigBase(i)
         If (existing == none || existing.GetFormID() == 0)
-			Debug.TRACE("CleanUp : " + i + " | Modname: " + existing.ModName)
             MCMUnlocked.UnregisterMarker(i)
 		Else
 			i -= 1

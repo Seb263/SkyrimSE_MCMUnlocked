@@ -5,7 +5,6 @@
 #include "Core/Serialization.hpp"
 
 #include "Utils/MiscUtils.hpp"
-#include "Utils/PapyrusUtils.hpp"
 
 namespace ModCore
 {
@@ -17,8 +16,15 @@ namespace ModCore
 			return Serialization::Functions::GetConfigCount();
 		}
 
-		static RE::TESObjectREFR* RegisterMarker()
+		static RE::TESObjectREFR* RegisterMarker(std::string modName)
 		{
+			if (modName.empty()) return nullptr;
+
+			if (Serialization::Functions::IsModNameRegistered(modName)) {
+				TRACE("RegisterMarker: mod \"{}\" already registered", modName);
+				return nullptr;
+			}
+
 			auto* marker = CreateMCMMarker();
 			if (!marker) {
 				TRACE("RegisterMarker: failed to create marker");
@@ -31,13 +37,24 @@ namespace ModCore
 				return nullptr;
 			}
 
-			if (!Serialization::Functions::RegisterMarker(handle)) {
-				TRACE("RegisterMarker: serialization rejected marker \"{:08X}\"", marker->formID);
+			if (!Serialization::Functions::RegisterMarker(handle, modName)) {
+				TRACE("RegisterMarker: serialization rejected marker \"{:08X}\" (race condition or duplicate)", marker->formID);
+				RE::GarbageCollector::GetSingleton()->Add(marker, true);
 				return nullptr;
 			}
 
-			TRACE("RegisterMarker: marker \"{:08X}\" registered successfully", marker->formID);
+			TRACE("RegisterMarker: marker \"{:08X}\" registered successfully for mod \"{}\"", marker->formID, modName);
 			return marker;
+		}
+
+		static std::string GetModNameFromConfigID(int a_configID)
+		{
+			if (a_configID < 0) return "";
+			
+			const std::string name = Serialization::Functions::GetModName(static_cast<std::uint32_t>(a_configID));
+			TRACE("GetModNameFromConfigID: configID {} -> \"{}\"", a_configID, name);
+			
+			return name;
 		}
 
 		static bool UnregisterMarker(int a_configID)
@@ -50,33 +67,6 @@ namespace ModCore
 		static RE::TESObjectREFR* GetMarkerFromIndex(int a_configID)
 		{
 			return Serialization::Functions::GetMarkerFromIndex(static_cast<std::uint32_t>(a_configID));
-		}
-
-		static std::string GetModNameFromConfigID(int a_configID)
-		{
-			constexpr std::string defaultName = "Unknown";
-
-			if (a_configID >= Serialization::g_configEntries.size()) {
-				TRACE("GetModNameFromConfigID: configID {} out of range (size {})", a_configID, Serialization::g_configEntries.size());
-				return defaultName;
-			}
-
-			auto& it = Serialization::g_configEntries[a_configID];
-			auto* ref = MiscUtils::ResolveVMHandle(it.markerHandle);
-			if (!ref) {
-				TRACE("GetModNameFromConfigID: configID {} -> failed to resolve VM handle", a_configID);
-				return defaultName;
-			}
-
-			auto scriptObj = PapyrusUtils::GetObject(ref, ModData::MCM_MARKER_SCRIPT.data());
-			if (!scriptObj) {
-				TRACE("GetModNameFromConfigID: configID {} -> script object not found on ref \"{:08X}\"", a_configID, ref->formID);
-				return defaultName;
-			}
-
-			const std::string name = PapyrusUtils::GetProperty<RE::BSFixedString>(scriptObj, "ModName").c_str();
-			TRACE("GetModNameFromConfigID: configID {} -> \"{}\"", a_configID, name);
-			return name;
 		}
 
 		static void UpdateMenuModNames(std::string a_menuName, std::string a_target)
