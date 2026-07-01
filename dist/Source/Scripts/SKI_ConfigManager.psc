@@ -115,7 +115,9 @@ event OnModSelect(string a_eventName, string a_strArg, float a_numArg, Form a_se
 		endIf
 
 		_activeConfig = MCMUnlocked.GetConfigBase(configIndex)
-		_activeConfig.OpenConfig()
+		If _activeConfig
+			_activeConfig.OpenConfig()
+		EndIf
 	endIf
 	UI.InvokeBool(JOURNAL_MENU, MENU_ROOT + ".unlock", true)
 endEvent
@@ -248,6 +250,7 @@ int function UnregisterMod(SKI_ConfigBase a_menu)
         EndIf
         i += 1
     EndWhile
+    Return -1
 endFunction
 
 function ForceReset()
@@ -278,9 +281,8 @@ function CleanUp()
 		SKI_ConfigBase existing = MCMUnlocked.GetConfigBase(i)
         If (existing == none || existing.GetFormID() == 0)
             MCMUnlocked.UnregisterMarker(i)
-		Else
-			i -= 1
         EndIf
+		i -= 1
 	EndWhile
 
     GotoState("")

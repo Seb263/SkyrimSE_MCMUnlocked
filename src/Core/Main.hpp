@@ -84,7 +84,7 @@ namespace ModCore
 			std::vector<RE::GFxValue> args(count);
 
 			for (std::size_t i = 0; i < count; ++i) {
-				strings[i] = GetModNameFromConfigID(static_cast<std::uint32_t>(i));
+				strings[i] = Serialization::g_configEntries[i].modName;
 				args[i].SetString(strings[i].c_str());
 			}
 
