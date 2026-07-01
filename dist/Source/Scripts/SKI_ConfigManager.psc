@@ -117,6 +117,8 @@ event OnModSelect(string a_eventName, string a_strArg, float a_numArg, Form a_se
 		_activeConfig = MCMUnlocked.GetConfigBase(configIndex)
 		If _activeConfig
 			_activeConfig.OpenConfig()
+		Else
+			Debug.Trace("[MCMUnlocked] OnModSelect: GetConfigBase(" + configIndex + ") returned None")
 		EndIf
 	endIf
 	UI.InvokeBool(JOURNAL_MENU, MENU_ROOT + ".unlock", true)
@@ -125,24 +127,32 @@ endEvent
 event OnPageSelect(string a_eventName, string a_strArg, float a_numArg, Form a_sender)
 	string page = a_strArg
 	int index = a_numArg as int
-	_activeConfig.SetPage(page, index)
+	If _activeConfig
+		_activeConfig.SetPage(page, index)
+	EndIf
 	UI.InvokeBool(JOURNAL_MENU, MENU_ROOT + ".unlock", true)
 endEvent
 
 event OnOptionHighlight(string a_eventName, string a_strArg, float a_numArg, Form a_sender)
 	int optionIndex = a_numArg as int
-	_activeConfig.HighlightOption(optionIndex)
+	If _activeConfig
+		_activeConfig.HighlightOption(optionIndex)
+	EndIf
 endEvent
 
 event OnOptionSelect(string a_eventName, string a_strArg, float a_numArg, Form a_sender)
 	int optionIndex = a_numArg as int
-	_activeConfig.SelectOption(optionIndex)
+	If _activeConfig
+		_activeConfig.SelectOption(optionIndex)
+	EndIf
 	UI.InvokeBool(JOURNAL_MENU, MENU_ROOT + ".unlock", true)
 endEvent
 
 event OnOptionDefault(string a_eventName, string a_strArg, float a_numArg, Form a_sender)
 	int optionIndex = a_numArg as int
-	_activeConfig.ResetOption(optionIndex)
+	If _activeConfig
+		_activeConfig.ResetOption(optionIndex)
+	EndIf
 	UI.InvokeBool(JOURNAL_MENU, MENU_ROOT + ".unlock", true)
 endEvent
 
@@ -166,50 +176,80 @@ event OnKeymapChange(string a_eventName, string a_strArg, float a_numArg, Form a
         i += 1
     EndWhile
 
-    _activeConfig.RemapKey(optionIndex, keyCode, conflictControl, conflictName)
+    If _activeConfig
+        _activeConfig.RemapKey(optionIndex, keyCode, conflictControl, conflictName)
+    EndIf
     UI.InvokeBool(JOURNAL_MENU, MENU_ROOT + ".unlock", true)
 endEvent
 
 event OnSliderSelect(string a_eventName, string a_strArg, float a_numArg, Form a_sender)
 	int optionIndex = a_numArg as int
-	_activeConfig.RequestSliderDialogData(optionIndex)
+	If _activeConfig
+		_activeConfig.RequestSliderDialogData(optionIndex)
+	Else
+		Debug.Trace("[MCMUnlocked] OnSliderSelect: _activeConfig is None, forcing unlock")
+		UI.InvokeBool(JOURNAL_MENU, MENU_ROOT + ".unlock", true)
+	EndIf
 endEvent
 
 event OnSliderAccept(string a_eventName, string a_strArg, float a_numArg, Form a_sender)
 	float value = a_numArg
-	_activeConfig.SetSliderValue(value)
+	If _activeConfig
+		_activeConfig.SetSliderValue(value)
+	EndIf
 	UI.InvokeBool(JOURNAL_MENU, MENU_ROOT + ".unlock", true)
 endEvent
 
 event OnMenuSelect(string a_eventName, string a_strArg, float a_numArg, Form a_sender)
 	int optionIndex = a_numArg as int
-	_activeConfig.RequestMenuDialogData(optionIndex)
+	If _activeConfig
+		_activeConfig.RequestMenuDialogData(optionIndex)
+	Else
+		Debug.Trace("[MCMUnlocked] OnMenuSelect: _activeConfig is None, forcing unlock")
+		UI.InvokeBool(JOURNAL_MENU, MENU_ROOT + ".unlock", true)
+	EndIf
 endEvent
 
 event OnMenuAccept(string a_eventName, string a_strArg, float a_numArg, Form a_sender)
 	int value = a_numArg as int
-	_activeConfig.SetMenuIndex(value)
+	If _activeConfig
+		_activeConfig.SetMenuIndex(value)
+	EndIf
 	UI.InvokeBool(JOURNAL_MENU, MENU_ROOT + ".unlock", true)
 endEvent
 
 event OnColorSelect(string a_eventName, string a_strArg, float a_numArg, Form a_sender)
 	int optionIndex = a_numArg as int
-	_activeConfig.RequestColorDialogData(optionIndex)
+	If _activeConfig
+		_activeConfig.RequestColorDialogData(optionIndex)
+	Else
+		Debug.Trace("[MCMUnlocked] OnColorSelect: _activeConfig is None, forcing unlock")
+		UI.InvokeBool(JOURNAL_MENU, MENU_ROOT + ".unlock", true)
+	EndIf
 endEvent
 
 event OnColorAccept(string a_eventName, string a_strArg, float a_numArg, Form a_sender)
 	int color = a_numArg as int
-	_activeConfig.SetColorValue(color)
+	If _activeConfig
+		_activeConfig.SetColorValue(color)
+	EndIf
 	UI.InvokeBool(JOURNAL_MENU, MENU_ROOT + ".unlock", true)
 endEvent
 
 event OnInputSelect(string a_eventName, string a_strArg, float a_numArg, Form a_sender)
 	int optionIndex = a_numArg as int
-	_activeConfig.RequestInputDialogData(optionIndex)
+	If _activeConfig
+		_activeConfig.RequestInputDialogData(optionIndex)
+	Else
+		Debug.Trace("[MCMUnlocked] OnInputSelect: _activeConfig is None, forcing unlock")
+		UI.InvokeBool(JOURNAL_MENU, MENU_ROOT + ".unlock", true)
+	EndIf
 endEvent
 
 event OnInputAccept(string a_eventName, string a_strArg, float a_numArg, Form a_sender)
-	_activeConfig.SetInputText(a_strArg)
+	If _activeConfig
+		_activeConfig.SetInputText(a_strArg)
+	EndIf
 	UI.InvokeBool(JOURNAL_MENU, MENU_ROOT + ".unlock", true)
 endEvent
 
