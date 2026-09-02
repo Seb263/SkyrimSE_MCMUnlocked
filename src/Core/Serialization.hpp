@@ -2,20 +2,23 @@
 
 #include "SettingsIni.hpp"
 
+#include "Core/JSONHandler.hpp"
+
 #include "Utils/MiscUtils.hpp"
 
 namespace Serialization
 {
     constexpr std::uint32_t coSaveId = std::byteswap('MCMU');
     constexpr std::uint32_t recordId = std::byteswap('MMAP');
+    constexpr std::uint32_t mappingVersion = 3;
 
-    struct MCMEntry
+    struct MCMSerializationEntry
     {
         RE::VMHandle markerHandle = 0;
-        std::string  modName;
+		std::string  modID = "";
     };
 
-    inline std::vector<MCMEntry> g_configEntries;
+    inline std::vector<MCMSerializationEntry> g_configEntries;
     inline std::shared_mutex g_configMapMutex;
 
     class Functions
@@ -40,55 +43,75 @@ namespace Serialization
             return static_cast<int>(g_configEntries.size());
         }
 
-        static bool IsModNameRegistered(const std::string& modName)
+		static MCMSerializationEntry* GetModEntryFromIndex(std::uint32_t index)
+		{
+			std::shared_lock lock(g_configMapMutex);
+			
+			if (index >= g_configEntries.size()) return nullptr;
+
+			return &g_configEntries[index];
+		}
+		
+		static MCMSerializationEntry* GetModEntryFromModID(const std::string& modID)
+		{
+			std::shared_lock lock(g_configMapMutex);
+			if (modID.empty()) return nullptr;
+
+			const bool hasColon = modID.contains("::");
+
+			for (auto& entry : g_configEntries) {
+				const std::string& entryID = hasColon ? entry.modID : entry.modID.substr(entry.modID.rfind("::") + 2);
+				if (entryID == modID) return &entry;
+			}
+
+			return nullptr;
+		}
+
+        static bool RegisterMarker(RE::VMHandle handle, const std::string& modID)
         {
-            std::shared_lock lock(g_configMapMutex);
-            for (const auto& entry : g_configEntries) {
-                if (entry.modName == modName) return true;
-            }
-            return false;
+            if (!handle || modID.empty()) return false;
+
+			if (GetModEntryFromModID(modID) != nullptr) return false;
+
+			std::unique_lock lock(g_configMapMutex);
+            g_configEntries.push_back({ handle, modID });
+           
+			return true;
         }
 
-        static bool RegisterMarker(RE::VMHandle handle, const std::string& modName)
-        {
-            if (!handle || modName.empty()) return false;
-            std::unique_lock lock(g_configMapMutex);
+		static bool UnregisterMarker(const std::string& modID)
+		{
+			std::unique_lock lock(g_configMapMutex);
+			if (modID.empty()) return false;
 
-			for (const auto& entry : g_configEntries) {
-                if (entry.modName == modName) {
-                    TRACE("RegisterMarker: mod \"{}\" already registered (double-check under lock)", modName);
-                    return false;
-                }
-            }
+			for (auto it = g_configEntries.begin(); it != g_configEntries.end(); ++it) {
+				if (it->modID != modID) continue;
 
-            g_configEntries.push_back({ handle, modName });
-            return true;
-        }
+				if (auto* ref = MiscUtils::ResolveVMHandle(it->markerHandle)) {
+					RE::GarbageCollector::GetSingleton()->Add(ref, true);
+				}
 
-        static bool UnregisterMarker(std::uint32_t a_index)
-        {
-            std::unique_lock lock(g_configMapMutex);
-            if (a_index >= g_configEntries.size()) return false;
-            auto& entry = g_configEntries[a_index];
-            auto* ref = MiscUtils::ResolveVMHandle(entry.markerHandle);
-            if (ref) RE::GarbageCollector::GetSingleton()->Add(ref, true);
-            g_configEntries.erase(g_configEntries.begin() + a_index);
-            return true;
-        }
+				g_configEntries.erase(it);
+				return true;
+			}
 
-        static RE::TESObjectREFR* GetMarkerFromIndex(std::uint32_t a_index)
-        {
-            std::shared_lock lock(g_configMapMutex);
-            if (a_index >= g_configEntries.size()) return nullptr;
-            return MiscUtils::ResolveVMHandle(g_configEntries[a_index].markerHandle);
-        }
+			return false;
+		}
 
-        static std::string GetModName(std::uint32_t a_index)
-        {
-            std::shared_lock lock(g_configMapMutex);
-            if (a_index >= g_configEntries.size()) return "";
-            return g_configEntries[a_index].modName;
-        }
+		static void UnregisterAllMarkers()
+		{
+			std::unique_lock lock(g_configMapMutex);
+
+			for (auto& entry : g_configEntries) {
+				if (auto* ref = MiscUtils::ResolveVMHandle(entry.markerHandle)) {
+					RE::GarbageCollector::GetSingleton()->Add(ref, true);
+				}
+			}
+
+			TRACE("UnregisterAllMarkers: removed {} marker(s)", g_configEntries.size());
+
+			g_configEntries.clear();
+		}
 
     private:
        
@@ -119,7 +142,7 @@ namespace Serialization
 		static void OnSave(SKSE::SerializationInterface* intfc)
         {
             std::shared_lock lock(g_configMapMutex);
-            if (!intfc->OpenRecord(recordId, 2)) {
+			if (!intfc->OpenRecord(recordId, mappingVersion)) {
                 TRACE("OnSave: failed to open record");
                 return;
             }
@@ -128,7 +151,7 @@ namespace Serialization
             intfc->WriteRecordData(&count, sizeof(count));
             for (const auto& entry : g_configEntries) {
                 intfc->WriteRecordData(&entry.markerHandle, sizeof(entry.markerHandle));
-                WriteString(intfc, entry.modName);
+                WriteString(intfc, entry.modID);
             }
 
             TRACE("OnSave: {} entries saved", count);
@@ -157,12 +180,12 @@ namespace Serialization
                         continue;
                     }
 
-                    std::string modName;
-                    if (version >= 2) {
-                        if (!ReadString(intfc, modName)) {
-                            TRACE("OnLoad: failed to read modName for entry {}", i);
-                            continue;
-                        }
+					if (version != mappingVersion) continue;
+
+					std::string modName;
+                    if (!ReadString(intfc, modName)) {
+                        TRACE("OnLoad: failed to read modName for entry {}", i);
+                        continue;
                     }
 
                     RE::VMHandle newHandle = 0;
@@ -179,6 +202,7 @@ namespace Serialization
             }
 
             if (SettingsIni::bGeneral_ResetMCMForOlderSaves && g_configEntries.empty()) MiscUtils::ResetMCMQuest();
+			ModCore::JSONHandler::ValidateMCMStructure(GetRegisteredModIDs());
         }
 
         static void OnRevert(SKSE::SerializationInterface*)
@@ -186,5 +210,17 @@ namespace Serialization
             std::unique_lock lock(g_configMapMutex);
             g_configEntries.clear();
         }
+
+		static std::vector<std::string> GetRegisteredModIDs()
+		{
+			std::vector<std::string> modIDs;
+			modIDs.reserve(g_configEntries.size());
+
+			std::ranges::transform(g_configEntries, std::back_inserter(modIDs), [](const MCMSerializationEntry& entry) {
+				return entry.modID;
+			});
+
+			return modIDs;
+		}
     };
 }

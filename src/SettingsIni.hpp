@@ -7,6 +7,115 @@ namespace SettingsIni
 	// General
 	inline int  iGeneral_VerboseMode = 1;
 	inline bool bGeneral_ResetMCMForOlderSaves = true;
+	inline bool bGeneral_OverwriteInvalidScripts = true;
+	inline bool bGeneral_ExtractScriptSources = false;
+
+	// Input bindings (DIK codes)
+	inline int iInput_ResetKey = 19; // R
+	inline int iInput_RenameKey = 1; // Mouse right
+	inline int iInput_ReorderKey = 2; // Mouse Middle
+
+	// Language
+	using LanguageMap = std::unordered_map<std::string, std::unordered_map<std::string, std::string>>;
+	static inline LanguageMap languageSettingsDefault = {
+		{ "RenameMenu", {
+			{ "english",  "Rename: %s" },
+			{ "french",   "Renommer : %s" },
+			{ "german",   "Umbenennen: %s" },
+			{ "spanish",  "Renombrar: %s" },
+			{ "italian",  "Rinomina: %s" },
+			{ "polish",   "Zmień nazwę: %s" },
+			{ "russian",  "Переименовать: %s" },
+			{ "japanese", "名前変更: %s" },
+			{ "chinese",  "重命名：%s" }
+		}},
+
+		{ "AutoSort", {
+			{ "english",  "+ Auto sort" },
+			{ "french",   "+ Trier automatiquement" },
+			{ "german",   "+ Automatisch sortieren" },
+			{ "spanish",  "+ Ordenar automáticamente" },
+			{ "italian",  "+ Ordina automaticamente" },
+			{ "polish",   "+ Sortuj automatycznie" },
+			{ "russian",  "+ Автоматическая сортировка" },
+			{ "japanese", "+ 自動並び替え" },
+			{ "chinese",  "+ 自动排序" }
+		}},
+
+		{ "DisableMenu", {
+			{ "english",  "+ Disable menu" },
+			{ "french",   "+ Désactiver le menu" },
+			{ "german",   "+ Menü deaktivieren" },
+			{ "spanish",  "+ Desactivar menú" },
+			{ "italian",  "+ Disattiva menu" },
+			{ "polish",   "+ Wyłącz menu" },
+			{ "russian",  "+ Отключить меню" },
+			{ "japanese", "+ メニューを無効化" },
+			{ "chinese",  "+ 禁用菜单" }
+		}},
+
+		{ "PlaceFirst", {
+			{ "english",  "> Place first" },
+			{ "french",   "> Placer en premier" },
+			{ "german",   "> An erste Stelle setzen" },
+			{ "spanish",  "> Colocar primero" },
+			{ "italian",  "> Metti per primo" },
+			{ "polish",   "> Umieść na początku" },
+			{ "russian",  "> Поместить первым" },
+			{ "japanese", "> 最初に配置" },
+			{ "chinese",  "> 放在最前面" }
+		}},
+
+		{ "PlaceAfter", {
+			{ "english",  "> Place after: %s" },
+			{ "french",   "> Placer après : %s" },
+			{ "german",   "> Platzieren nach: %s" },
+			{ "spanish",  "> Colocar después de: %s" },
+			{ "italian",  "> Posiziona dopo: %s" },
+			{ "polish",   "> Umieść po: %s" },
+			{ "russian",  "> Поместить после: %s" },
+			{ "japanese", "> 次の後に配置: %s" },
+			{ "chinese",  "> 放在之后：%s" }
+		}},
+
+		{ "ResetWarning", {
+			{ "english",  "Choose whether to fully reset all MCM settings or simply rebuild menu instance indexing while preserving your personal settings." },
+			{ "french",   "Choisissez si vous souhaitez réinitialiser entièrement tous les paramètres du MCM ou simplement reconstruire l'indexation des instances tout en conservant vos réglages personnels." },
+			{ "german",   "Wählen Sie, ob Sie alle MCM-Einstellungen vollständig zurücksetzen oder nur die Instanzindizierung neu erstellen und dabei Ihre persönlichen Einstellungen beibehalten möchten." },
+			{ "spanish",  "Elija si desea restablecer completamente todos los ajustes del MCM o simplemente reconstruir la indexación de instancias conservando sus ajustes personales." },
+			{ "italian",  "Scegli se reimpostare completamente tutte le impostazioni MCM oppure ricostruire solo l'indicizzazione delle istanze mantenendo le impostazioni personali." },
+			{ "polish",   "Wybierz, czy chcesz całkowicie zresetować wszystkie ustawienia MCM, czy tylko odbudować indeksowanie instancji z zachowaniem ustawień osobistych." },
+			{ "russian",  "Выберите, хотите ли вы полностью сбросить все настройки MCM или только перестроить индексацию экземпляров, сохранив личные настройки." },
+			{ "japanese", "すべてのMCM設定を完全にリセットするか、個人設定を保持したままインスタンスのインデックスのみを再構築するか選択してください。" },
+			{ "chinese",  "请选择是完全重置所有 MCM 设置，还是仅重建实例索引并保留个人设置。" }
+		}},
+
+		{ "ResetWarningAll", {
+			{ "english",  "Full reset" },
+			{ "french",   "Réinitialisation complète" },
+			{ "german",   "Vollständiger Reset" },
+			{ "spanish",  "Restablecimiento completo" },
+			{ "italian",  "Reimpostazione completa" },
+			{ "polish",   "Pełny reset" },
+			{ "russian",  "Полный сброс" },
+			{ "japanese", "完全リセット" },
+			{ "chinese",  "完全重置" }
+		}},
+
+		{ "ResetWarningMarkers", {
+			{ "english",  "Rebuild indexing" },
+			{ "french",   "Reconstruire l'indexation" },
+			{ "german",   "Indizierung neu erstellen" },
+			{ "spanish",  "Reconstruir indexación" },
+			{ "italian",  "Ricostruisci indicizzazione" },
+			{ "polish",   "Odbuduj indeksowanie" },
+			{ "russian",  "Перестроить индексацию" },
+			{ "japanese", "インデックスを再構築" },
+			{ "chinese",  "重建索引" }
+		}}
+	};
+
+	inline LanguageMap languageSettings = languageSettingsDefault;
 
 	class SettingsManager
 	{
@@ -16,7 +125,14 @@ namespace SettingsIni
 			bindings = {
 				// General
 				{ "General", "iVerboseMode", &iGeneral_VerboseMode },
-				{ "General", "bResetMCMForOlderSaves", &bGeneral_ResetMCMForOlderSaves }
+				{ "General", "bResetMCMForOlderSaves", &bGeneral_ResetMCMForOlderSaves },
+				{ "General", "bOverwriteInvalidScripts", &bGeneral_OverwriteInvalidScripts },
+				{ "General", "bExtractScriptSources", &bGeneral_ExtractScriptSources },
+
+				// Input
+				{ "Input", "iResetKey", &iInput_ResetKey },
+				{ "Input", "iRenameKey", &iInput_RenameKey },
+				{ "Input", "iReorderKey", &iInput_ReorderKey }
 			};
 		}
 
@@ -49,6 +165,7 @@ namespace SettingsIni
 						},
 							bind.var);
 					}
+					LoadLanguageSettings(ini);
 					readStatus = true;
 				} else {
 					logger::error("Failed to load INI file at {}", path);
@@ -68,6 +185,42 @@ namespace SettingsIni
 			}();
 
 			return readStatus;
+		}
+
+		void LoadLanguageSettings(const CSimpleIniA& ini)
+		{
+			languageSettings = languageSettingsDefault;
+
+			CSimpleIniA::TNamesDepend keys;
+			ini.GetAllKeys("Language", keys);
+
+			for (auto& key : keys) {
+				std::string keyStr = key.pItem;
+
+				size_t pos = keyStr.rfind('_');
+				if (pos == std::string::npos) continue;
+
+				std::string variable = keyStr.substr(0, pos);
+				std::string lang = keyStr.substr(pos + 1);
+				std::transform(lang.begin(), lang.end(), lang.begin(), ::tolower);
+
+				const char* value = ini.GetValue("Language", keyStr.c_str(), nullptr);
+				if (value && *value) languageSettings[variable][lang] = value;
+			}
+		}
+
+		std::string GetLanguageValue(const std::string& variable, const std::string& lang, const std::string& defaultValue = "") const
+		{
+			std::string langLower = lang;
+			std::transform(langLower.begin(), langLower.end(), langLower.begin(), ::tolower);
+
+			auto varIt = languageSettings.find(variable);
+			if (varIt == languageSettings.end()) return defaultValue;
+
+			auto langIt = varIt->second.find(langLower);
+			if (langIt == varIt->second.end()) return defaultValue;
+
+			return langIt->second;
 		}
 
 		std::optional<std::variant<bool, int, float, std::string>> GetValueVariant(const std::string& key_section)

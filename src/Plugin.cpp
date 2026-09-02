@@ -6,6 +6,9 @@
 static void MessageHandler(SKSE::MessagingInterface::Message* a_msg)
 {
 	switch (a_msg->type) {
+	case SKSE::MessagingInterface::kPostLoad:
+		ModData::DataHandler::GetSingleton()->PreInitData();
+		break;
 	case SKSE::MessagingInterface::kDataLoaded:
 		ModData::DataHandler::GetSingleton()->PreLoadData();
 		break;

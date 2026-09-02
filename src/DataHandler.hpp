@@ -24,4 +24,6 @@ namespace ModData
 	};
 
 	inline RE::TESDataHandler* TESdataHandler;
+	inline std::string gameLanguage;
+	inline bool modStatus = true;
 }

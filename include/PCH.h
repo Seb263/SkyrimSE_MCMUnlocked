@@ -2,6 +2,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMMNOSOUND
+#define NOMINMAX
 
 #include <unordered_set>
 #include <shared_mutex>
@@ -12,14 +13,12 @@
 
 #include <spdlog/sinks/basic_file_sink.h>
 
-#include <ClibUtil/distribution.hpp>
-#include <ClibUtil/editorID.hpp>
-#include <ClibUtil/numeric.hpp>
-#include <ClibUtil/rng.hpp>
-#include <ClibUtil/simpleINI.hpp>
-
+#include <SimpleIni.h>
 #include <magic_enum.hpp>
-#include <SimpleMath.h>
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
+#include "re-fmt.h"
 
 #include "Utils/Debug.hpp"
 

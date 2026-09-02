@@ -9,24 +9,31 @@ Int Function GetConfigCount() global native
 ; Creates a new MCM marker, registers it internally, and returns the associated ObjectReference
 ObjectReference Function RegisterMarker(String modName) global native
 
-; Unregisters a configuration by index and removes its associated marker
-; Returns true if the operation succeeded
-Bool Function UnregisterMarker(Int configID) global native
+; Unregisters a configuration by mod ID and removes its associated marker
+Bool Function UnregisterMarker(String modID) global native
 
-; Retrieves the ObjectReference linked to the given configuration index
-; Returns None if the index is invalid or the marker is missing
-ObjectReference Function GetMarkerFromIndex(Int configID) global native
+; Removes all registered configurations and markers
+Bool Function UnregisterAllMarkers() global native
 
-; Updates displayed mod names for a given menu
-Function UpdateMenuModNames(string menuName, string target) global native
+; Returns the mod ID at the given config index
+String Function GetModIDFromConfigID(Int configID) global native
 
+; Returns the mod ID of the currently selected entry
+String Function GetModIDFromSelectedEntry() global native
+
+; Returns the display name of a mod by ID
+String Function GetModNameFromModID(string modID) global native
+
+; Returns the marker linked to a mod ID
+ObjectReference Function GetMarkerFromModID(string modID) global native
+
+; Updates displayed mod names for the left panel
+Function UpdateMenuModNames() global native
 
 ; Helpers
 
-; Retrieves the marker script attached to the configuration index
-; Returns None if the marker or script is missing
-MCMUnlockedMarkerScript Function GetMarkerScript(Int configID) global
-	ObjectReference marker = GetMarkerFromIndex(configID)
+SKI_ConfigBase Function GetConfigBase(String modID) global
+	ObjectReference marker = GetMarkerFromModID(modID)
 	If !marker
 		Return None
 	EndIf
@@ -36,27 +43,5 @@ MCMUnlockedMarkerScript Function GetMarkerScript(Int configID) global
 		Return None
 	EndIf
 
-	Return markerScript
-EndFunction
-
-; Retrieves the SKI_ConfigBase instance associated with a configuration index
-; Returns None if the marker or script is missing
-SKI_ConfigBase Function GetConfigBase(Int configID) global
-	MCMUnlockedMarkerScript markerScript = GetMarkerScript(configID)
-	If !markerScript
-		Return None
-	EndIf
-
 	Return markerScript.InstanceScript
-EndFunction
-
-; Returns the mod name associated with a configuration index
-; Returns an empty string if the marker or script is missing
-String Function GetModName(Int configID) global
-	MCMUnlockedMarkerScript markerScript = GetMarkerScript(configID)
-	If !markerScript
-		Return ""
-	EndIf
-
-	Return markerScript.ModName
 EndFunction

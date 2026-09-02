@@ -93,7 +93,7 @@ endEvent
 event OnMenuOpen(string a_menuName)
     GotoState("BUSY")
     _activeConfig = none
-	MCMUnlocked.UpdateMenuModNames(JOURNAL_MENU, MENU_ROOT + ".setModNames")
+	MCMUnlocked.UpdateMenuModNames()
 endEvent
 
 event OnMenuClose(string a_menuName)
@@ -114,8 +114,11 @@ event OnModSelect(string a_eventName, string a_strArg, float a_numArg, Form a_se
 			_activeConfig.CloseConfig()
 		endIf
 
-		_activeConfig = MCMUnlocked.GetConfigBase(configIndex)
-		_activeConfig.OpenConfig()
+		String modID = MCMUnlocked.GetModIDFromSelectedEntry()
+		If (modID != "")
+			_activeConfig = MCMUnlocked.GetConfigBase(modID)
+			_activeConfig.OpenConfig()
+		EndIf
 	endIf
 	UI.InvokeBool(JOURNAL_MENU, MENU_ROOT + ".unlock", true)
 endEvent
@@ -154,11 +157,13 @@ event OnKeymapChange(string a_eventName, string a_strArg, float a_numArg, Form a
     Int count = MCMUnlocked.GetConfigCount()
     Int i = 0
     While conflictControl == "" && i < count
-        SKI_ConfigBase config = MCMUnlocked.GetConfigBase(i)
+		String modID = MCMUnlocked.GetModIDFromConfigID(i)
+        SKI_ConfigBase config = MCMUnlocked.GetConfigBase(modID)
+		
         If (config != none)
             conflictControl = config.GetCustomControl(keyCode)
             If conflictControl != ""
-                conflictName = MCMUnlocked.GetModName(i)
+                conflictName = MCMUnlocked.GetModNameFromModID(modID)
             EndIf
         EndIf
         i += 1
@@ -238,16 +243,10 @@ int function RegisterMod(SKI_ConfigBase a_menu, string a_modName)
 endFunction
 
 int function UnregisterMod(SKI_ConfigBase a_menu)
-    Int count = MCMUnlocked.GetConfigCount()
-    Int i = 0
-    While i < count
-        SKI_ConfigBase existing = MCMUnlocked.GetConfigBase(i)
-        If existing == a_menu
-            MCMUnlocked.UnregisterMarker(i)
-            Return i
-        EndIf
-        i += 1
-    EndWhile
+	String modID = a_menu.modName
+	If (modID != "")
+		MCMUnlocked.UnregisterMarker(modID)
+	EndIf
 endFunction
 
 function ForceReset()
@@ -256,32 +255,36 @@ function ForceReset()
 
     GotoState("BUSY")
 
-	Int i = MCMUnlocked.GetConfigCount() - 1
-	While i >= 0
-		MCMUnlocked.UnregisterMarker(i)
-		i -= 1
-	EndWhile
+	MCMUnlocked.UnregisterAllMarkers()
 
     GotoState("")
 
     SendModEvent("SKICP_configManagerReady")
 endFunction
 
-function CleanUp()
+Function CleanUp()
     GotoState("BUSY")
 
     _cleanupFlag = false
+	
+	Int[] MCMUnlockedVersion = MCMUnlocked.GetVersion()
+	If (MCMUnlockedVersion.Length < 3 || (MCMUnlockedVersion[0] + MCMUnlockedVersion[1] + MCMUnlockedVersion[2]) < 1)
+		Debug.MessageBox("The 'MCM-Unlocked.dll' file was not found/loaded. This file is essential for MCM to function properly. Without it, the mod list will remain empty.")
+	EndIf
 
-	Int i = MCMUnlocked.GetConfigCount() - 1
+    Int i = 0
+    While i < MCMUnlocked.GetConfigCount()
+        String modID = MCMUnlocked.GetModIDFromConfigID(i)
+        SKI_ConfigBase config = MCMUnlocked.GetConfigBase(modID)
 
-	While i >= 0
-		SKI_ConfigBase existing = MCMUnlocked.GetConfigBase(i)
-        If (existing == none || existing.GetFormID() == 0)
-            MCMUnlocked.UnregisterMarker(i)
-		Else
-			i -= 1
+        If (config == None || config.GetFormID() == 0)
+            If (!MCMUnlocked.UnregisterMarker(modID))
+                i += 1
+            EndIf
+        Else
+            i += 1
         EndIf
-	EndWhile
+    EndWhile
 
     GotoState("")
 EndFunction
